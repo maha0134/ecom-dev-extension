@@ -8,7 +8,7 @@ function init() {
     if (request.message === "Keywords") {
       let btn = document.getElementById("btn");
       btn.textContent = "Diagnostics Finished";
-      document.body.append(request.data[0]);
+      console.log(request.data.keywords);
     } else {
       console.log("no messages!");
     }
@@ -62,12 +62,17 @@ function runAudit() {
   function traverseNodes() {
     const headers = {};
     const tags = {};
+    const keywords = {};
 
+    // ["then","they","them","their","this","that",""] && exceptions.test(text)
     for (const element of document.body.querySelectorAll("*")) {
+      //ALL HTML elements in Body
       checkHeaders(element, headers);
+      if (element.tagName !== "SCRIPT") findKeywords(element, keywords);
     }
 
     console.log(headers);
+    console.log(keywords);
     if (!headers["H1"]) {
       console.log("WARNING: You do not have an H1 header defined!");
     }
@@ -90,19 +95,27 @@ function runAudit() {
     }
   }
 
-  function findKeywords() {
-    let textNodes = [];
-    let body = document.body;
-    for (let i = 0; i < body.childNodes.length; i++) {
-      var childNode = body.childNodes[i];
-      if (childNode.nodeType === 3) {
-        textNodes.push(childNode);
+  function findKeywords(element, keywords) {
+    const exceptions =
+      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|0-9)\b/i;
+    const content = element.textContent;
+    if (content) {
+      const wordsArray = content.split(" ");
+      if (wordsArray.length > 0) {
+        wordsArray.forEach((word) => {
+          if (word.length > 3 && !exceptions.test(word)) {
+            if (word in keywords) {
+              keywords[word] += 1;
+            } else {
+              keywords[word] = 1;
+            }
+          }
+        });
       }
     }
-    console.log(textNodes);
     chrome.runtime.sendMessage({
       message: "Keywords",
-      data: { textNodes },
+      data: { keywords },
     });
   }
 
