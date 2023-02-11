@@ -4,7 +4,13 @@ function init() {
 }
 
 function handleClick(ev) {
-  ev.target.innerHTML = "Diagnosing";
+  console.log("button clicked");
+  ev.target.textContent = "Diagnosing";
+  searchKeywords();
+}
+
+function searchKeywords() {
+  document.querySelectorAll("img").forEach((img) => console.log(img.src));
 }
 
 document.addEventListener("DOMContentLoaded", init);
