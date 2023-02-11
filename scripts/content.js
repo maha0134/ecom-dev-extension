@@ -46,14 +46,28 @@ function runAudit() {
   }
 
   function traverseNodes() {
-    console.log("inside traverseNodes");
+    const headers = {};
 
-    for (const node in document.body.childNodes) {
-      console.log(node);
-
-      if (node.childNodes) {
-        traverseNodes(node.childNodes);
+    for (const element of document.body.querySelectorAll("*")) {
+      if (
+        element.tagName === "H1" ||
+        element.tagName === "H2" ||
+        element.tagName === "H3" ||
+        element.tagName === "H4" ||
+        element.tagName === "H5" ||
+        element.tagName === "H6"
+      ) {
+        if (headers[element.tagName] === undefined) {
+          headers[element.tagName] = 1;
+        } else {
+          headers[element.tagName]++;
+        }
       }
+    }
+
+    console.log(headers);
+    if (!headers["H1"]) {
+      console.log("WARNING: You do not have an H1 header defined!");
     }
   }
 }
