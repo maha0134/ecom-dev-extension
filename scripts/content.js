@@ -37,34 +37,40 @@ function runAudit() {
   // Functions called must be in local scope of runAudit()
   function auditImages() {
     let count = 0;
+    let images = [];
     document.querySelectorAll("img").forEach((img) => {
       if (img) {
         var width = img.naturalWidth;
         var height = img.naturalHeight;
-
-        console.log(
-          "The resolution of this image is " +
-            width +
-            " x " +
-            height +
-            " pixels."
-        );
         if (width >= 1920 || height >= 1920) {
           count++;
+          images.push(img);
         }
       }
     });
     if (count == 1) {
       console.log(`You have a image with resolution higher than 1920`);
+      if (images[0].src) {
+        console.log(`Here is the image source: ${images[0].src}`);
+      } else if (images[0].srcset) {
+        console.log(`Here is the image source: ${images[0].srcset}`);
+      }
     } else if (count > 1) {
       console.log(`You have ${count} images with resolution higher than 1920`);
+      console.log(`Here is the list of image sources:`);
+      images.forEach((img) => {
+        if (img.src) {
+          console.log(img.src);
+        } else if (img.srcset) {
+          console.log(img.srcset.split(",")[0]);
+        }
+      });
     }
   }
 
   function auditLinks() {
     let count = 0;
     document.querySelectorAll("a").forEach(async (link) => {
-      console.log(link);
       const brokenLinks = [];
       try {
         const response = await fetch(link, {
@@ -81,8 +87,12 @@ function runAudit() {
     });
     if (count == 1) {
       console.log(`You have a broken link`);
+      console.log(brokenLinks[0]);
     } else if (count > 1) {
       console.log(`You have ${count} broken links`);
+      brokenLinks.forEach((brokenLink) => {
+        console.log(brokenLink);
+      });
     }
   }
 
@@ -141,7 +151,6 @@ function runAudit() {
 
     document.querySelectorAll("title").forEach((title) => {
       if (title) {
-        console.log(title.innerHTML);
         if (title.innerHTML.toLowerCase().includes(keyword)) {
           titleCounter++;
         }
@@ -150,7 +159,6 @@ function runAudit() {
 
     document.querySelectorAll("h1").forEach((heading) => {
       if (heading) {
-        console.log(heading.innerHTML);
         if (heading.innerHTML.toLowerCase().includes(keyword)) {
           headingCounter++;
         }
@@ -158,7 +166,6 @@ function runAudit() {
     });
 
     let url = window.location.href;
-    console.log("url " + url);
     if (url.indexOf(keyword) > -1) {
       urlCounter++;
     }
