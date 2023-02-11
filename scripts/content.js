@@ -40,22 +40,10 @@ function runAudit() {
 
   function traverseNodes() {
     const headers = {};
+    const tags = {};
 
     for (const element of document.body.querySelectorAll("*")) {
-      if (
-        element.tagName === "H1" ||
-        element.tagName === "H2" ||
-        element.tagName === "H3" ||
-        element.tagName === "H4" ||
-        element.tagName === "H5" ||
-        element.tagName === "H6"
-      ) {
-        if (headers[element.tagName] === undefined) {
-          headers[element.tagName] = 1;
-        } else {
-          headers[element.tagName]++;
-        }
-      }
+      checkHeaders(element, headers);
     }
 
     console.log(headers);
@@ -63,6 +51,25 @@ function runAudit() {
       console.log("WARNING: You do not have an H1 header defined!");
     }
   }
+
+  function checkHeaders(element, headers) {
+    if (
+      element.tagName === "H1" ||
+      element.tagName === "H2" ||
+      element.tagName === "H3" ||
+      element.tagName === "H4" ||
+      element.tagName === "H5" ||
+      element.tagName === "H6"
+    ) {
+      if (headers[element.tagName] === undefined) {
+        headers[element.tagName] = 1;
+      } else {
+        headers[element.tagName]++;
+      }
+    }
+  }
+
+  function checkDeprecatedTags(element, tags) {}
 }
 
 document.addEventListener("DOMContentLoaded", init);
