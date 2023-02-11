@@ -15,14 +15,13 @@ async function handleClick(ev) {
 }
 
 function runAudit() {
-  getImages();
+  auditImages();
   traverseNodes();
 
   // Functions called must be in local scope of runAudit()
-  function getImages() {
-    console.log("loaded");
+  function auditImages() {
+    let count = 0;
     document.querySelectorAll("img").forEach((img) => {
-      console.log(img);
       if (img) {
         var width = img.naturalWidth;
         var height = img.naturalHeight;
@@ -34,8 +33,16 @@ function runAudit() {
             height +
             " pixels."
         );
+        if (width >= 1920 || height >= 1920) {
+          count++;
+        }
       }
     });
+    if (count == 1) {
+      console.log(`You have a image with resolution higher than 1920`);
+    } else if (count > 1) {
+      console.log(`You have ${count} images with resolution higher than 1920`);
+    }
   }
 
   function traverseNodes() {
