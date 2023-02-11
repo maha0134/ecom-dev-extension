@@ -1,7 +1,21 @@
 function init() {
   let button = document.getElementById("btn");
+  chrome.runtime.onMessage.addListener(function (
+    request,
+    sender,
+    sendResponse
+  ) {
+    if (request.message === "Keywords") {
+      let btn = document.getElementById("btn");
+      btn.textContent = "Diagnostics Finished";
+      document.body.append(request.data[0]);
+    } else {
+      console.log("no messages!");
+    }
+  });
   button.addEventListener("click", handleClick);
 }
+
 async function handleClick(ev) {
   ev.target.innerHTML = "Diagnosing";
 
@@ -15,7 +29,7 @@ async function handleClick(ev) {
 
 function runAudit() {
   getImages();
-  traverseNodes();
+  findKeywords();
 
   // Functions called must be in local scope of runAudit()
   function getImages() {
@@ -37,16 +51,20 @@ function runAudit() {
     });
   }
 
-  function traverseNodes() {
-    console.log("inside traverseNodes");
-
-    for (const node in document.body.childNodes) {
-      console.log(node);
-
-      if (node.childNodes) {
-        traverseNodes(node.childNodes);
+  function findKeywords() {
+    let textNodes = [];
+    let body = document.body;
+    for (let i = 0; i < body.childNodes.length; i++) {
+      var childNode = body.childNodes[i];
+      if (childNode.nodeType === 3) {
+        textNodes.push(childNode);
       }
     }
+    console.log(textNodes);
+    chrome.runtime.sendMessage({
+      message: "Keywords",
+      data: { textNodes },
+    });
   }
 }
 
