@@ -32,6 +32,7 @@ function runAudit() {
   auditLinks();
   traverseNodes();
   findKeywords();
+  checkKeyword("Shopify"); //TODO: Update the function call
 
   // Functions called must be in local scope of runAudit()
   function auditImages() {
@@ -185,6 +186,54 @@ function runAudit() {
       tags.push(element);
     }
   }
+  function checkKeyword(keyword) {
+    keyword = keyword.toLowerCase();
+    let titleCounter = 0;
+    let headingCounter = 0;
+    let urlCounter = 0;
+
+    document.querySelectorAll("title").forEach((title) => {
+      if (title) {
+        console.log(title.innerHTML);
+        if (title.innerHTML.toLowerCase().includes(keyword)) {
+          titleCounter++;
+        }
+      }
+    });
+
+    document.querySelectorAll("h1").forEach((heading) => {
+      if (heading) {
+        console.log(heading.innerHTML);
+        if (heading.innerHTML.toLowerCase().includes(keyword)) {
+          headingCounter++;
+        }
+      }
+    });
+
+    let url = window.location.href;
+    console.log("url " + url);
+    if (url.indexOf(keyword) > -1) {
+      urlCounter++;
+    }
+
+    if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
+      if (titleCounter === 0) {
+        console.log(`You should add the keyword "${keyword}" in <title>`);
+      }
+      if (headingCounter === 0) {
+        console.log(`You should add the keyword "${keyword}" in <h1>`);
+      }
+      if (urlCounter === 0) {
+        console.log(`You should add the keyword "${keyword}" in <body>`);
+      }
+    }
+
+    if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
+      console.log(`${keyword} is a strong keyword`);
+    }
+  }
+
+  function checkDeprecatedTags(element, tags) {}
 }
 
 document.addEventListener("DOMContentLoaded", init);
