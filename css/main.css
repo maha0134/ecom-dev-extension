@@ -1,0 +1,15 @@
+body {
+  width: 383px;
+  height: 600px;
+}
+
+#btn {
+  width: 280px;
+  height: 53px;
+  border: 0;
+  color: #d9d9d9;
+  border-radius: 100rem;
+  color: #000;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
