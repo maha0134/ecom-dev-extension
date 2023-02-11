@@ -62,7 +62,6 @@ function runAudit() {
   function auditLinks() {
     let count = 0;
     document.querySelectorAll("a").forEach(async (link) => {
-      console.log(link);
       const brokenLinks = [];
       try {
         const response = await fetch(link, {
@@ -101,6 +100,12 @@ function runAudit() {
     console.log(keywords);
     if (!headers["H1"]) {
       console.log("WARNING: You do not have an H1 header defined!");
+    } else {
+      if (headers["H1"] > 1) {
+        console.log(
+          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+        );
+      }
     }
   }
 
