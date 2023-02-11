@@ -61,10 +61,11 @@ function runAudit() {
 
   function traverseNodes() {
     const headers = {};
-    const tags = {};
+    const tags = [];
 
     for (const element of document.body.querySelectorAll("*")) {
       checkHeaders(element, headers);
+      checkDeprecatedTags(element, tags);
     }
 
     console.log(headers);
@@ -106,7 +107,58 @@ function runAudit() {
     });
   }
 
-  function checkDeprecatedTags(element, tags) {}
+  function checkDeprecatedTags(element, tags) {
+    const deprecatedTags = {
+      ACRONYM:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/acronym",
+      APPLET:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/applet",
+      BGSOUND:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/bgsound",
+      BIG: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/big",
+      BLINK: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blink",
+      CENTER:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/center",
+      CONTENT:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/content",
+      DIR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dir",
+      FONT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/font",
+      FRAME: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frame",
+      FRAMESET:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frameset",
+      IMAGE: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/image",
+      KEYGEN:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/keygen",
+      MARQUEE:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/marquee",
+      MENUITEM:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/menuitem",
+      NOBR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/nobr",
+      NOEMBED:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noembed",
+      NOFRAMES:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noframes",
+      PARAM: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/param",
+      PLAINTEXT:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/plaintext",
+      RB: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rb",
+      RTC: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rtc",
+      SHADOW:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/shadow",
+      SPACER:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/spacer",
+      STRIKE:
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/strike",
+      TT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tt",
+      XMP: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/xmp",
+    };
+
+    if (deprecatedTags[element.tagName]) {
+      console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
+      console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
+      tags.push(element);
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
