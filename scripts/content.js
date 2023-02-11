@@ -29,6 +29,7 @@ async function handleClick(ev) {
 
 function runAudit() {
   auditImages();
+  auditLinks();
   traverseNodes();
   findKeywords();
 
@@ -56,6 +57,31 @@ function runAudit() {
       console.log(`You have a image with resolution higher than 1920`);
     } else if (count > 1) {
       console.log(`You have ${count} images with resolution higher than 1920`);
+    }
+  }
+
+  function auditLinks() {
+    let count = 0;
+    document.querySelectorAll("a").forEach(async (link) => {
+      console.log(link);
+      const brokenLinks = [];
+      try {
+        const response = await fetch(link, {
+          method: "HEAD",
+          mode: "no-cors",
+        });
+        if (response.status < 300) {
+          brokenLinks.push(link);
+        }
+      } catch (err) {
+        count++;
+        console.log(err.message);
+      }
+    });
+    if (count == 1) {
+      console.log(`You have a broken link`);
+    } else if (count > 1) {
+      console.log(`You have ${count} broken links`);
     }
   }
 
