@@ -8,7 +8,7 @@ function init() {
   ) {
     if (request.message === "Keywords") {
       button.textContent = "Diagnostics Finished";
-      console.log(request.data.keywords);
+      console.log(request.data.sortedKeywords);
     } else {
       console.log("no messages!");
     }
@@ -16,7 +16,7 @@ function init() {
 }
 
 async function handleClick(ev) {
-  ev.target.innerHTML = "Diagnosing";
+  ev.target.textContent = "Diagnosing";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -96,30 +96,56 @@ function runAudit() {
   function traverseNodes() {
     const headers = {};
     const tags = {};
-    const keywords = {};
+    let keywords = {};
 
     // ["then","they","them","their","this","that",""] && exceptions.test(text)
-    for (const element of document.body.querySelectorAll("*")) {
-      //ALL HTML elements in Body
-      checkHeaders(element, headers);
-      checkDeprecatedTags(element, tags);
-      if (element.tagName !== "SCRIPT") findKeywords(element, keywords);
-    }
 
-    console.log(headers);
-    console.log(keywords);
-    if (!headers["H1"]) {
-      console.log("WARNING: You do not have an H1 header defined!");
-    } else {
-      if (headers["H1"] > 1) {
-        console.log(
-          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
-        );
+    for (const element of document.body.querySelectorAll("*")) {
+      getHeaders(element, headers);
+      checkDeprecatedTags(element, tags);
+      if (
+        element.tagName !== "SCRIPT" &&
+        element.tagName !== "svg" &&
+        element.tagName !== "g" &&
+        element.tagName !== "path" &&
+        element.tagName !== "polygon" &&
+        element.tagName !== "use" &&
+        element.tagName !== "circle" &&
+        element.tagName !== "rect" &&
+        element.tagName !== "polyline" &&
+        element.tagName !== "line" &&
+        element.tagName !== "STYLE" &&
+        element.tagName !== "IMG" &&
+        element.tagName !== "SOURCE" &&
+        element.tagName !== "PICTURE" &&
+        element.tagName !== "IFRAME" &&
+        element.tagName !== "clipPath" &&
+        element.tagName !== "defs" &&
+        element.tagName !== "SELECT" &&
+        element.tagName !== "OPTION" &&
+        element.tagName !== "FORM" &&
+        element.tagName !== "INPUT" &&
+        element.tagName !== "TEMPLATE" &&
+        element.tagName !== "title"
+      ) {
+        // console.log(element.tagName);
+        findKeywords(element, keywords);
       }
     }
+    let sortedArrayOfWords = Object.entries(keywords).sort(
+      (a, b) => b[1] - a[1]
+    );
+    sortedArrayOfWords.splice(5);
+    let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
+    checkHeaderStructure(headers);
+    chrome.runtime.sendMessage({
+      message: "Keywords",
+      data: { sortedKeywords },
+    });
+    console.log(sortedKeywords);
   }
 
-  function checkHeaders(element, headers) {
+  function getHeaders(element, headers) {
     if (
       element.tagName === "H1" ||
       element.tagName === "H2" ||
@@ -137,26 +163,51 @@ function runAudit() {
   }
 
   function findKeywords(element, keywords) {
-    const exceptions =
-      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|These|Those|They|\d+.*)\b/gi;
-    const content = element.textContent;
-    if (content) {
-      const wordsArray = content.split(" ");
-      if (wordsArray.length > 0) {
-        wordsArray.forEach((word) => {
-          if (word.length > 3 && !exceptions.test(word)) {
-            if (word in keywords) {
-              keywords[word] += 1;
-            } else {
-              keywords[word] = 1;
-            }
-          }
-        });
+    const matches =
+      /\b(?!from|they|then|their|this|that|those|them|will|have|https|http|shall|thou|These|Those|They\b)[a-zA-Z]{4,}\b/g;
+
+    const arrayOfWords = element?.textContent?.match(matches);
+    if (arrayOfWords?.length > 0) {
+      arrayOfWords.forEach((word) => {
+        if (word in keywords) {
+          keywords[word] += 1;
+        } else {
+          keywords[word] = 1;
+        }
+      });
+    }
+  }
+
+  function checkHeaderStructure(headers) {
+    // Check for none or multiple H1 headers
+    console.log(headers);
+    if (!headers["H1"]) {
+      console.log("WARNING: You do not have an H1 header defined!");
+    } else {
+      if (headers["H1"] > 1) {
+        console.log(
+          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+        );
       }
     }
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { keywords },
+
+    // Check for gaps in header structure
+    // const headerKeys = Object.keys(headers);
+    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+    let gapStartTag;
+    let gap = 0;
+
+    headerTags.forEach((tag, index) => {
+      const count = headers[tag];
+      if (!count) {
+        gapStartTag = headerTags[index - 1];
+        gap++;
+      } else if (count && gap >= 1) {
+        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+        console.log(`Gap between ${gapStartTag} and ${tag}`);
+        gap = 0;
+      }
     });
   }
 
@@ -255,8 +306,6 @@ function runAudit() {
       console.log(`${keyword} is a strong keyword`);
     }
   }
-
-  function checkDeprecatedTags(element, tags) {}
 }
 
 document.addEventListener("DOMContentLoaded", init);
