@@ -13,14 +13,23 @@ async function handleClick(ev) {
   });
 }
 
-function runAudit() {
+async function runAudit() {
   let imageAuditData = auditImages();
-  let linkAuditData = auditLinks();
-
-  traverseNodes();
+  let linkAuditData = await auditLinks();
+  let nodesData = traverseNodes();
   findKeywords();
   checkKeyword("Shopify"); //TODO: Update the function call
 
+  chrome.runtime.sendMessage({
+    message: "Audit Data",
+    data: {
+      auditData: {
+        imageAuditData,
+        linkAuditData,
+        nodesData,
+      },
+    },
+  });
   // Functions called must be in local scope of runAudit()
   function auditImages() {
     let count = 0;
@@ -58,7 +67,7 @@ function runAudit() {
     // }
   }
 
-  function auditLinks() {
+  async function auditLinks() {
     let count = 0;
     const brokenLinks = [];
     document.querySelectorAll("a").forEach(async (link) => {
@@ -89,7 +98,10 @@ function runAudit() {
 
   function traverseNodes() {
     const headers = {};
-    const tags = {};
+    const tags = {
+      count: 0,
+      elements: [],
+    };
     let keywords = {};
 
     for (const element of document.body.querySelectorAll("*")) {
@@ -120,7 +132,6 @@ function runAudit() {
         element.tagName !== "TEMPLATE" &&
         element.tagName !== "title"
       ) {
-        // console.log(element.tagName);
         findKeywords(element, keywords);
       }
     }
@@ -130,11 +141,12 @@ function runAudit() {
     sortedArrayOfWords.splice(5);
     let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
     checkHeaderStructure(headers);
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { sortedKeywords },
-    });
-    console.log(sortedKeywords);
+
+    return {
+      auditHeaders: headers,
+      auditTags: tags,
+      auditKeywords: keywords,
+    };
   }
 
   function getHeaders(element, headers) {
@@ -204,6 +216,8 @@ function runAudit() {
   }
 
   function checkDeprecatedTags(element, tags) {
+    let count = 0;
+    let elements = [];
     const deprecatedTags = {
       ACRONYM:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/acronym",
@@ -250,10 +264,12 @@ function runAudit() {
     };
 
     if (deprecatedTags[element.tagName]) {
-      console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
-      console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
-      tags.push(element);
+      tags.count++;
+      // console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
+      // console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
+      tags.elements.push(element);
     }
+    return { count, elements };
   }
   function checkKeyword(keyword) {
     keyword = keyword.toLowerCase();
@@ -302,9 +318,9 @@ function runAudit() {
 
 function handleData(request, sender, sendResponse) {
   let button = document.getElementById("btn");
-  if (request.message === "Keywords") {
+  if (request.message === "Audit Data") {
     button.textContent = "Diagnostics Finished";
-    console.log(request.data.sortedKeywords);
+    console.log(request.data.auditData);
   } else {
     console.log("no messages!");
   }
