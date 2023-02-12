@@ -100,26 +100,15 @@ function runAudit() {
 
     // ["then","they","them","their","this","that",""] && exceptions.test(text)
     for (const element of document.body.querySelectorAll("*")) {
-      //ALL HTML elements in Body
-      checkHeaders(element, headers);
+      getHeaders(element, headers);
       checkDeprecatedTags(element, tags);
       if (element.tagName !== "SCRIPT") findKeywords(element, keywords);
     }
 
-    console.log(headers);
-    console.log(keywords);
-    if (!headers["H1"]) {
-      console.log("WARNING: You do not have an H1 header defined!");
-    } else {
-      if (headers["H1"] > 1) {
-        console.log(
-          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
-        );
-      }
-    }
+    checkHeaderStructure(headers);
   }
 
-  function checkHeaders(element, headers) {
+  function getHeaders(element, headers) {
     if (
       element.tagName === "H1" ||
       element.tagName === "H2" ||
@@ -152,6 +141,51 @@ function runAudit() {
             }
           }
         });
+      }
+    }
+  }
+  function checkHeaderStructure(headers) {
+    // Check for none or multiple H1 headers
+    console.log(headers);
+    if (!headers["H1"]) {
+      console.log("WARNING: You do not have an H1 header defined!");
+    } else {
+      if (headers["H1"] > 1) {
+        console.log(
+          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+        );
+      }
+    }
+
+    // Check for gaps in header structure
+    // const headerKeys = Object.keys(headers);
+    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+    let gapStartTag;
+    let gap = 0;
+
+    headerTags.forEach((tag, index) => {
+      const count = headers[tag];
+      console.log(count);
+
+      if (!count) {
+        gapStartTag = headerTags[index - 1];
+        gap++;
+      } else if (count && gap >= 1) {
+        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+        console.log(`Gap between ${gapStartTag} and ${tag}`);
+        gap = 0;
+      }
+    });
+  }
+
+  function findKeywords() {
+    let textNodes = [];
+    let body = document.body;
+    for (let i = 0; i < body.childNodes.length; i++) {
+      var childNode = body.childNodes[i];
+      if (childNode.nodeType === 3) {
+        textNodes.push(childNode);
       }
     }
     chrome.runtime.sendMessage({
@@ -255,8 +289,6 @@ function runAudit() {
       console.log(`${keyword} is a strong keyword`);
     }
   }
-
-  function checkDeprecatedTags(element, tags) {}
 }
 
 document.addEventListener("DOMContentLoaded", init);
