@@ -64,7 +64,7 @@ body {
   color: #fdfdfd;
 }
 
-/* --- RESULTS SCEEN --- */
+/* --- RESULTS SCREEN --- */
 .back-btn {
   display: flex;
   align-items: center;
@@ -73,6 +73,7 @@ body {
   font-weight: bold;
   padding-left: 1.5rem;
   cursor: pointer;
+  margin-top: 20px;
 }
 
 .material-icons-round.arrow {
@@ -136,3 +137,43 @@ body {
 .bold {
   font-weight: bold;
 }
+/* --- RESULT DETAILS --- */
+
+.result-details{
+  width: 351px;
+  height: 406px;
+  margin-left: 16px;
+  margin-top: 33px;
+  background: #FFEEE9;
+  border-radius: 15px;
+  text-align: left;
+}
+
+.result-details p{
+  width: 303px;
+  height: 76px;
+  margin-left: 24px;
+  padding-top: 19px;
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.details-list{
+list-style: none;
+margin-top: 79px;
+margin-left: 64px;
+padding: 0;
+}
+
+.details-list li{
+  margin-bottom: 27px;
+  display: flex;
+  align-items: center;
+}
+
+.details-list li span {
+  padding-right: 8px;
+}
+
