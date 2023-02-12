@@ -173,8 +173,10 @@ padding: 0;
 }
 
 /* --- DEPRECATED TAGS --- */
-.deprecated-html-tags .result-details{
+.deprecated-html-tags .result-details,
+.link-checker .result-details{
   background-color:#fff;
+  margin-top: 8px; 
 }
 
 .tags-title{
@@ -197,7 +199,8 @@ height: fit-content;
   text-align: right;
 }
 
-.deprecated-html-tags ul{
+.deprecated-html-tags ul,
+.link-checker ul{
   margin: 0;
   margin-top: 20px;
 }
@@ -207,7 +210,12 @@ height: fit-content;
   justify-content: space-between;
 }
 
-.deprecated-html-tags li p{
+.link-checker li{
+  display: block;
+}
+
+.deprecated-html-tags li p,
+.link-checker li p{
   margin: 0px;
   height: fit-content;
   padding: 0;
@@ -215,4 +223,8 @@ height: fit-content;
 
 .deprecated-html-tags li p:last-child{
   text-align: right;
+}
+
+.link-checker ,.result-details p{
+  width: auto;
 }
