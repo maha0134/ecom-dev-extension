@@ -1,18 +1,7 @@
 function init() {
   let button = document.getElementById("btn");
   button.addEventListener("click", handleClick);
-  chrome.runtime.onMessage.addListener(function (
-    request,
-    sender,
-    sendResponse
-  ) {
-    if (request.message === "Keywords") {
-      button.textContent = "Diagnostics Finished";
-      console.log(request.data.sortedKeywords);
-    } else {
-      console.log("no messages!");
-    }
-  });
+  chrome.runtime.onMessage.addListener(handleData);
 }
 
 async function handleClick(ev) {
@@ -97,8 +86,6 @@ function runAudit() {
     const headers = {};
     const tags = {};
     let keywords = {};
-
-    // ["then","they","them","their","this","that",""] && exceptions.test(text)
 
     for (const element of document.body.querySelectorAll("*")) {
       getHeaders(element, headers);
@@ -305,6 +292,16 @@ function runAudit() {
     if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
       console.log(`${keyword} is a strong keyword`);
     }
+  }
+}
+
+function handleData(request, sender, sendResponse) {
+  let button = document.getElementById("btn");
+  if (request.message === "Keywords") {
+    button.textContent = "Diagnostics Finished";
+    console.log(request.data.sortedKeywords);
+  } else {
+    console.log("no messages!");
   }
 }
 
