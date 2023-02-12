@@ -1,16 +1,26 @@
 function init() {
-  let button = document.getElementById("btn");
+  const button = document.getElementById("btn");
+  const backResults = document.querySelector(".back-btn");
   button.addEventListener("click", handleClick);
+  backResults.addEventListener("click", backToResults);
   chrome.runtime.onMessage.addListener(handleData);
 }
 
 async function handleClick(ev) {
-  ev.target.textContent = "Diagnosing";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: runAudit,
   });
+
+  // show results screen
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("results").classList.remove("hidden");
+}
+
+function backToResults(ev) {
+  document.getElementById("results").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
 }
 
 async function runAudit() {
