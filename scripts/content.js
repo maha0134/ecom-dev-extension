@@ -14,8 +14,9 @@ async function handleClick(ev) {
 }
 
 function runAudit() {
-  auditImages();
-  auditLinks();
+  let imageAuditData = auditImages();
+  let linkAuditData = auditLinks();
+
   traverseNodes();
   findKeywords();
   checkKeyword("Shopify"); //TODO: Update the function call
@@ -34,30 +35,33 @@ function runAudit() {
         }
       }
     });
-    if (count == 1) {
-      console.log(`You have a image with resolution higher than 1920`);
-      if (images[0].src) {
-        console.log(`Here is the image source: ${images[0].src}`);
-      } else if (images[0].srcset) {
-        console.log(`Here is the image source: ${images[0].srcset}`);
-      }
-    } else if (count > 1) {
-      console.log(`You have ${count} images with resolution higher than 1920`);
-      console.log(`Here is the list of image sources:`);
-      images.forEach((img) => {
-        if (img.src) {
-          console.log(img.src);
-        } else if (img.srcset) {
-          console.log(img.srcset.split(",")[0]);
-        }
-      });
-    }
+    //returning data to popup
+    return { count, images };
+
+    // if (count == 1) {
+    //   console.log(`You have a image with resolution higher than 1920`);
+    //   if (images[0].src) {
+    //     console.log(`Here is the image source: ${images[0].src}`);
+    //   } else if (images[0].srcset) {
+    //     console.log(`Here is the image source: ${images[0].srcset}`);
+    //   }
+    // } else if (count > 1) {
+    //   console.log(`You have ${count} images with resolution higher than 1920`);
+    //   console.log(`Here is the list of image sources:`);
+    //   images.forEach((img) => {
+    //     if (img.src) {
+    //       console.log(img.src);
+    //     } else if (img.srcset) {
+    //       console.log(img.srcset.split(",")[0]);
+    //     }
+    //   });
+    // }
   }
 
   function auditLinks() {
     let count = 0;
+    const brokenLinks = [];
     document.querySelectorAll("a").forEach(async (link) => {
-      const brokenLinks = [];
       try {
         const response = await fetch(link, {
           method: "HEAD",
@@ -71,15 +75,16 @@ function runAudit() {
         console.log(err.message);
       }
     });
-    if (count == 1) {
-      console.log(`You have a broken link`);
-      console.log(brokenLinks[0]);
-    } else if (count > 1) {
-      console.log(`You have ${count} broken links`);
-      brokenLinks.forEach((brokenLink) => {
-        console.log(brokenLink);
-      });
-    }
+    return { count, brokenLinks };
+    // if (count == 1) {
+    //   console.log(`You have a broken link`);
+    //   console.log(brokenLinks[0]);
+    // } else if (count > 1) {
+    //   console.log(`You have ${count} broken links`);
+    //   brokenLinks.forEach((brokenLink) => {
+    //     console.log(brokenLink);
+    //   });
+    // }
   }
 
   function traverseNodes() {
