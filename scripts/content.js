@@ -1,8 +1,17 @@
 function init() {
   const button = document.getElementById("btn");
-  const backResults = document.querySelector(".back-btn");
+  const backResults = document.querySelector("#results .back-btn");
+  const resultsList = document.querySelector(".results-list");
+  const backImageSize = document.querySelector(
+    "#image-size-analysis .back-btn"
+  );
+  const backHeading = document.querySelector("#heading-structure .back-btn");
+
   button.addEventListener("click", handleClick);
-  backResults.addEventListener("click", backToResults);
+  backResults.addEventListener("click", backToHome);
+  backImageSize.addEventListener("click", backToResultsFromImage);
+  backHeading.addEventListener("click", backToResultsFromHeading);
+  resultsList.addEventListener("click", resultsDetailHandler);
   chrome.runtime.onMessage.addListener(handleData);
 }
 
@@ -18,9 +27,46 @@ async function handleClick(ev) {
   document.getElementById("results").classList.remove("hidden");
 }
 
-function backToResults(ev) {
+function backToHome(ev) {
   document.getElementById("results").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
+}
+
+function backToResultsFromImage(ev) {
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("image-size-analysis").classList.add("hidden");
+}
+
+function backToResultsFromHeading(ev) {
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("heading-structure").classList.add("hidden");
+}
+
+function resultsDetailHandler(ev) {
+  console.log(ev.target.id);
+  const id = ev.target.closest("li").id;
+
+  switch (id) {
+    case "keyword":
+      console.log("keyword clicked");
+      break;
+    case "heading":
+      console.log("heading clicked");
+      document.getElementById("heading-structure").classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
+      break;
+    case "image-analysis":
+      console.log("image analysis clicked");
+      document.getElementById("image-size-analysis").classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
+      break;
+    case "html-tags":
+      console.log("html-tags clicked");
+      break;
+    case "link-check":
+      console.log("link check clicked");
+      break;
+  }
 }
 
 async function runAudit() {
