@@ -5,19 +5,49 @@
   rel="stylesheet"
   type="text/css"
 />
+<link
+  href="https://fonts.googleapis.com/css?family=Material+Icons%7CMaterial+Icons+Outlined%7CMaterial+Icons+Round"
+  rel="stylesheet"
+/>
 <html lang="en">
   <body>
-    <div class="header">
-      <div class="logo">
-        <img src="./images/ecomet.png" class="logo-img" />
-        <p>eComet</p>
+    <section class="home hidden">
+      <div class="header">
+        <div class="logo">
+          <img src="./images/ecomet.png" class="logo-img" />
+          <p>eComet</p>
+        </div>
       </div>
-    </div>
-    <p class="intro">
-      Get a comprehensive analysis of your e-commerce website performance and
-      improve sales with eComet's one-click diagnostic tool
-    </p>
-    <button id="btn">Run Audit</button>
+      <p class="intro">
+        Get a comprehensive analysis of your e-commerce website performance and
+        improve sales with eComet's one-click diagnostic tool
+      </p>
+      <button id="btn">Run Audit</button>
+    </section>
+    <section class="results">
+      <div class="header">
+        <div class="logo">
+          <img src="./images/ecomet.png" class="logo-img" />
+          <p>eComet</p>
+        </div>
+      </div>
+      <div class="back-btn">
+        <span class="material-icons-round arrow"> arrow_back </span>
+        Results
+      </div>
+      <ul class="results-list">
+        <li class="result-card keyword">
+          <div class="card-left">
+            <span class="material-icons-round status-icon">check_circle </span>
+            <div class="card-text">
+              <p class="title">Keyword Analysis</p>
+              <p class="findings">10 found, 1 alert</p>
+            </div>
+          </div>
+          <span class="material-icons-round disclosure"> chevron_right </span>
+        </li>
+      </ul>
+    </section>
     <script src="./scripts/content.js"></script>
   </body>
 </html>
