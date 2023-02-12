@@ -16,9 +16,10 @@ async function handleClick(ev) {
 async function runAudit() {
   let imageAuditData = auditImages();
   let linkAuditData = await auditLinks();
-  let nodesData = traverseNodes();
-  findKeywords();
-  checkKeyword("Shopify"); //TODO: Update the function call
+  let { auditHeaders, auditTags, auditKeywords } = traverseNodes();
+  let primeKeyword = Object.keys(auditKeywords)[0];
+  console.log(primeKeyword);
+  let { urlCounter, headingCounter, titleCounter } = checkKeyword(primeKeyword); //TODO: Update the function call
 
   chrome.runtime.sendMessage({
     message: "Audit Data",
@@ -26,7 +27,14 @@ async function runAudit() {
       auditData: {
         imageAuditData,
         linkAuditData,
-        nodesData,
+        auditHeaders,
+        auditTags,
+        auditKeywords,
+        auditPrimeKeyword: {
+          urlCounter,
+          headingCounter,
+          titleCounter,
+        },
       },
     },
   });
@@ -140,12 +148,11 @@ async function runAudit() {
     );
     sortedArrayOfWords.splice(5);
     let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
-    checkHeaderStructure(headers);
 
     return {
       auditHeaders: headers,
       auditTags: tags,
-      auditKeywords: keywords,
+      auditKeywords: sortedKeywords,
     };
   }
 
@@ -180,39 +187,6 @@ async function runAudit() {
         }
       });
     }
-  }
-
-  function checkHeaderStructure(headers) {
-    // Check for none or multiple H1 headers
-    console.log(headers);
-    if (!headers["H1"]) {
-      console.log("WARNING: You do not have an H1 header defined!");
-    } else {
-      if (headers["H1"] > 1) {
-        console.log(
-          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
-        );
-      }
-    }
-
-    // Check for gaps in header structure
-    // const headerKeys = Object.keys(headers);
-    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
-
-    let gapStartTag;
-    let gap = 0;
-
-    headerTags.forEach((tag, index) => {
-      const count = headers[tag];
-      if (!count) {
-        gapStartTag = headerTags[index - 1];
-        gap++;
-      } else if (count && gap >= 1) {
-        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
-        console.log(`Gap between ${gapStartTag} and ${tag}`);
-        gap = 0;
-      }
-    });
   }
 
   function checkDeprecatedTags(element, tags) {
@@ -297,22 +271,23 @@ async function runAudit() {
     if (url.indexOf(keyword) > -1) {
       urlCounter++;
     }
+    return { urlCounter, headingCounter, titleCounter };
 
-    if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
-      if (titleCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <title>`);
-      }
-      if (headingCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <h1>`);
-      }
-      if (urlCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <body>`);
-      }
-    }
+    // if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
+    //   if (titleCounter === 0) {
+    //     console.log(`You should add the keyword "${keyword}" in <title>`);
+    //   }
+    //   if (headingCounter === 0) {
+    //     console.log(`You should add the keyword "${keyword}" in <h1>`);
+    //   }
+    //   if (urlCounter === 0) {
+    //     console.log(`You should add the keyword "${keyword}" in <body>`);
+    //   }
+    // }
 
-    if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
-      console.log(`${keyword} is a strong keyword`);
-    }
+    // if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
+    //   console.log(`${keyword} is a strong keyword`);
+    // }
   }
 }
 
@@ -320,10 +295,45 @@ function handleData(request, sender, sendResponse) {
   let button = document.getElementById("btn");
   if (request.message === "Audit Data") {
     button.textContent = "Diagnostics Finished";
-    console.log(request.data.auditData);
+    let auditData = request.data.auditData;
+    console.log(auditData);
+    checkHeaderStructure(auditData.auditHeaders);
   } else {
     console.log("no messages!");
   }
+}
+
+function checkHeaderStructure(headers) {
+  // Check for none or multiple H1 headers
+  console.log(headers);
+  if (!headers["H1"]) {
+    console.log("WARNING: You do not have an H1 header defined!");
+  } else {
+    if (headers["H1"] > 1) {
+      console.log(
+        `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+      );
+    }
+  }
+
+  // Check for gaps in header structure
+  // const headerKeys = Object.keys(headers);
+  const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+  let gapStartTag;
+  let gap = 0;
+
+  headerTags.forEach((tag, index) => {
+    const count = headers[tag];
+    if (!count) {
+      gapStartTag = headerTags[index - 1];
+      gap++;
+    } else if (count && gap >= 1) {
+      console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+      console.log(`Gap between ${gapStartTag} and ${tag}`);
+      gap = 0;
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
