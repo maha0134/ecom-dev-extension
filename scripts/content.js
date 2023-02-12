@@ -139,7 +139,7 @@ function runAudit() {
 
   function findKeywords(element, keywords) {
     const exceptions =
-      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|0-9)\b/i;
+      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|These|Those|They|\d+.*)\b/gi;
     const content = element.textContent;
     if (content) {
       const wordsArray = content.split(" ");
