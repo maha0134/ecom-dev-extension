@@ -90,23 +90,14 @@ function runAudit() {
     const tags = [];
 
     for (const element of document.body.querySelectorAll("*")) {
-      checkHeaders(element, headers);
+      getHeaders(element, headers);
       checkDeprecatedTags(element, tags);
     }
 
-    console.log(headers);
-    if (!headers["H1"]) {
-      console.log("WARNING: You do not have an H1 header defined!");
-    } else {
-      if (headers["H1"] > 1) {
-        console.log(
-          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
-        );
-      }
-    }
+    checkHeaderStructure(headers);
   }
 
-  function checkHeaders(element, headers) {
+  function getHeaders(element, headers) {
     if (
       element.tagName === "H1" ||
       element.tagName === "H2" ||
@@ -121,6 +112,41 @@ function runAudit() {
         headers[element.tagName]++;
       }
     }
+  }
+
+  function checkHeaderStructure(headers) {
+    // Check for none or multiple H1 headers
+    console.log(headers);
+    if (!headers["H1"]) {
+      console.log("WARNING: You do not have an H1 header defined!");
+    } else {
+      if (headers["H1"] > 1) {
+        console.log(
+          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+        );
+      }
+    }
+
+    // Check for gaps in header structure
+    // const headerKeys = Object.keys(headers);
+    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+    let gapStartTag;
+    let gap = 0;
+
+    headerTags.forEach((tag, index) => {
+      const count = headers[tag];
+      console.log(count);
+
+      if (!count) {
+        gapStartTag = headerTags[index - 1];
+        gap++;
+      } else if (count && gap >= 1) {
+        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+        console.log(`Gap between ${gapStartTag} and ${tag}`);
+        gap = 0;
+      }
+    });
   }
 
   function findKeywords() {
@@ -237,8 +263,6 @@ function runAudit() {
       console.log(`${keyword} is a strong keyword`);
     }
   }
-
-  function checkDeprecatedTags(element, tags) {}
 }
 
 document.addEventListener("DOMContentLoaded", init);
