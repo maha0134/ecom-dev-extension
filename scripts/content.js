@@ -166,7 +166,7 @@ function runAudit() {
     const matches =
       /\b(?!from|they|then|their|this|that|those|them|will|have|https|http|shall|thou|These|Those|They\b)[a-zA-Z]{4,}\b/g;
 
-    const arrayOfWords = element.textContent.match(matches);
+    const arrayOfWords = element?.textContent?.match(matches);
     if (arrayOfWords?.length > 0) {
       arrayOfWords.forEach((word) => {
         if (word in keywords) {
@@ -200,8 +200,6 @@ function runAudit() {
 
     headerTags.forEach((tag, index) => {
       const count = headers[tag];
-      console.log(count);
-
       if (!count) {
         gapStartTag = headerTags[index - 1];
         gap++;
@@ -210,21 +208,6 @@ function runAudit() {
         console.log(`Gap between ${gapStartTag} and ${tag}`);
         gap = 0;
       }
-    });
-  }
-
-  function findKeywords() {
-    let textNodes = [];
-    let body = document.body;
-    for (let i = 0; i < body.childNodes.length; i++) {
-      var childNode = body.childNodes[i];
-      if (childNode.nodeType === 3) {
-        textNodes.push(childNode);
-      }
-    }
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { keywords },
     });
   }
 
