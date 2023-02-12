@@ -7,7 +7,11 @@
     "default_popup": "popup.html",
     "default_icon": "./images/ecomet.png"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
+  "icons": {
+    "16": "./images/ecomet.png",
+    "48": "./images/ecomet.png",
+    "128": "./images/ecomet.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
