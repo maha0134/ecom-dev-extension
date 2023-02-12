@@ -6,11 +6,13 @@ function init() {
     "#image-size-analysis .back-btn"
   );
   const backHeading = document.querySelector("#heading-structure .back-btn");
+  const backTags = document.querySelector("#deprecated-html-tags .back-btn");
 
   button.addEventListener("click", handleClick);
   backResults.addEventListener("click", backToHome);
   backImageSize.addEventListener("click", backToResultsFromImage);
   backHeading.addEventListener("click", backToResultsFromHeading);
+  backTags.addEventListener("click", backToResultsFromTags);
   resultsList.addEventListener("click", resultsDetailHandler);
   chrome.runtime.onMessage.addListener(handleData);
 }
@@ -42,6 +44,11 @@ function backToResultsFromHeading(ev) {
   document.getElementById("heading-structure").classList.add("hidden");
 }
 
+function backToResultsFromTags(ev) {
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("deprecated-html-tags").classList.add("hidden");
+}
+
 function resultsDetailHandler(ev) {
   console.log(ev.target.id);
   const id = ev.target.closest("li").id;
@@ -62,6 +69,10 @@ function resultsDetailHandler(ev) {
       break;
     case "html-tags":
       console.log("html-tags clicked");
+      document
+        .getElementById("deprecated-html-tags")
+        .classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
       break;
     case "link-check":
       console.log("link check clicked");
