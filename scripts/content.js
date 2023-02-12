@@ -6,7 +6,7 @@ function init() {
     "#image-size-analysis .back-btn"
   );
   const backHeading = document.querySelector("#heading-structure .back-btn");
-  const backTags = document.querySelector("#deprecated-html-tags .back-btn");
+  const backTags = document.querySelector("#deprecated-html-tag .back-btn");
 
   button.addEventListener("click", handleClick);
   backResults.addEventListener("click", backToHome);
@@ -46,7 +46,7 @@ function backToResultsFromHeading(ev) {
 
 function backToResultsFromTags(ev) {
   document.getElementById("results").classList.remove("hidden");
-  document.getElementById("deprecated-html-tags").classList.add("hidden");
+  document.getElementById("deprecated-html-tag").classList.add("hidden");
 }
 
 function resultsDetailHandler(ev) {
@@ -69,9 +69,7 @@ function resultsDetailHandler(ev) {
       break;
     case "html-tags":
       console.log("html-tags clicked");
-      document
-        .getElementById("deprecated-html-tags")
-        .classList.remove("hidden");
+      document.getElementById("deprecated-html-tag").classList.remove("hidden");
       document.getElementById("results").classList.add("hidden");
       break;
     case "link-check":
