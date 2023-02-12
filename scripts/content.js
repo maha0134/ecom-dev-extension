@@ -16,7 +16,7 @@ function init() {
 }
 
 async function handleClick(ev) {
-  ev.target.innerHTML = "Diagnosing";
+  ev.target.textContent = "Diagnosing";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -103,7 +103,33 @@ function runAudit() {
       //ALL HTML elements in Body
       checkHeaders(element, headers);
       checkDeprecatedTags(element, tags);
-      if (element.tagName !== "SCRIPT") findKeywords(element, keywords);
+      if (
+        element.tagName !== "SCRIPT" &&
+        element.tagName !== "svg" &&
+        element.tagName !== "g" &&
+        element.tagName !== "path" &&
+        element.tagName !== "polygon" &&
+        element.tagName !== "use" &&
+        element.tagName !== "circle" &&
+        element.tagName !== "rect" &&
+        element.tagName !== "polyline" &&
+        element.tagName !== "line" &&
+        element.tagName !== "STYLE" &&
+        element.tagName !== "IMG" &&
+        element.tagName !== "SOURCE" &&
+        element.tagName !== "PICTURE" &&
+        element.tagName !== "IFRAME" &&
+        element.tagName !== "clipPath" &&
+        element.tagName !== "defs" &&
+        element.tagName !== "SELECT" &&
+        element.tagName !== "OPTION" &&
+        element.tagName !== "FORM" &&
+        element.tagName !== "INPUT" &&
+        element.tagName !== "TEMPLATE"
+      ) {
+        console.log(element.tagName);
+        findKeywords(element, keywords);
+      }
     }
 
     console.log(headers);
@@ -137,23 +163,19 @@ function runAudit() {
   }
 
   function findKeywords(element, keywords) {
-    const exceptions =
-      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|These|Those|They|\d+.*)\b/gi;
-    const content = element.textContent;
-    if (content) {
-      const wordsArray = content.split(" ");
-      if (wordsArray.length > 0) {
-        wordsArray.forEach((word) => {
-          if (word.length > 3 && !exceptions.test(word)) {
-            if (word in keywords) {
-              keywords[word] += 1;
-            } else {
-              keywords[word] = 1;
-            }
-          }
-        });
-      }
+    const matches =
+      /\b(?!from|they|then|their|this|that|those|them|will|have|https|http|shall|thou|These|Those|They\b)[a-zA-Z]{4,}\b/g;
+    const arrayOfWords = element.textContent.match(matches);
+    if (arrayOfWords?.length > 0) {
+      arrayOfWords.forEach((word) => {
+        if (word in keywords) {
+          keywords[word] += 1;
+        } else {
+          keywords[word] = 1;
+        }
+      });
     }
+    
     chrome.runtime.sendMessage({
       message: "Keywords",
       data: { keywords },
