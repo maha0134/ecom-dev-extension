@@ -11,7 +11,7 @@
 />
 <html lang="en">
   <body>
-    <section class="home hidden">
+    <section id="home">
       <div class="header">
         <div class="logo">
           <img src="./images/ecomet.png" class="logo-img" />
@@ -24,7 +24,7 @@
       </p>
       <button id="btn">Run Audit</button>
     </section>
-    <section class="results hidden">
+    <section id="results" class="">
       <div class="header">
         <div class="logo">
           <img src="./images/ecomet.png" class="logo-img" />
@@ -36,19 +36,59 @@
         Results
       </div>
       <ul class="results-list">
-        <li class="result-card keyword">
+        <li class="result-card" id="keyword">
           <div class="card-left">
             <span class="material-icons-round status-icon">check_circle </span>
             <div class="card-text">
               <p class="title">Keyword Analysis</p>
-              <p class="findings">10 found, 1 alert</p>
+              <!-- <p class="findings"><span class="bold found">5</span> found</p> -->
+            </div>
+          </div>
+          <span class="material-icons-round disclosure"> chevron_right </span>
+        </li>
+        <li class="result-card" id="heading">
+          <div class="card-left">
+            <span class="material-icons-round status-icon">check_circle </span>
+            <div class="card-text">
+              <p class="title">Heading Structure</p>
+              <!-- <p class="findings"><span class="bold found">0</span> alerts</p> -->
+            </div>
+          </div>
+          <span class="material-icons-round disclosure"> chevron_right </span>
+        </li>
+        <li class="result-card" id="image-analysis">
+          <div class="card-left">
+            <span class="material-icons-round status-icon">check_circle </span>
+            <div class="card-text">
+              <p class="title">Image Size Analysis</p>
+              <!-- <p class="findings"><span class="bold found">0</span> found</p> -->
+            </div>
+          </div>
+          <span class="material-icons-round disclosure"> chevron_right </span>
+        </li>
+        <li class="result-card" id="html-tags">
+          <div class="card-left">
+            <span class="material-icons-round status-icon">check_circle </span>
+            <div class="card-text">
+              <p class="title">Deprecated HTML Tags</p>
+              <!-- <p class="findings"><span class="bold found">0</span> found</p> -->
+            </div>
+          </div>
+          <span class="material-icons-round disclosure"> chevron_right </span>
+        </li>
+        <li class="result-card" id="link-check">
+          <div class="card-left">
+            <span class="material-icons-round status-icon">check_circle </span>
+            <div class="card-text">
+              <p class="title">Link Checker</p>
+              <!-- <p class="findings"><span class="bold found">0</span> found</p> -->
             </div>
           </div>
           <span class="material-icons-round disclosure"> chevron_right </span>
         </li>
       </ul>
     </section>
-    <section class="heading-structure hidden">
+    <section id="heading-structure" class="hidden">
       <div class="header">
         <div class="logo">
           <img src="./images/ecomet.png" class="logo-img" />
@@ -78,7 +118,7 @@
         </ul>
       </div>
     </section>
-    <section class="image-size-analysis hidden">
+    <section id="image-size-analysis" class="hidden">
       <div class="header">
         <div class="logo">
           <img src="./images/ecomet.png" class="logo-img" />

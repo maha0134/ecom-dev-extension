@@ -1,26 +1,99 @@
 function init() {
-  let button = document.getElementById("btn");
+  const button = document.getElementById("btn");
+  const backResults = document.querySelector("#results .back-btn");
+  const resultsList = document.querySelector(".results-list");
+  const backImageSize = document.querySelector(
+    "#image-size-analysis .back-btn"
+  );
+  const backHeading = document.querySelector("#heading-structure .back-btn");
+
   button.addEventListener("click", handleClick);
+  backResults.addEventListener("click", backToHome);
+  backImageSize.addEventListener("click", backToResultsFromImage);
+  backHeading.addEventListener("click", backToResultsFromHeading);
+  resultsList.addEventListener("click", resultsDetailHandler);
   chrome.runtime.onMessage.addListener(handleData);
 }
 
 async function handleClick(ev) {
-  ev.target.textContent = "Diagnosing";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: runAudit,
   });
+
+  // show results screen
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("results").classList.remove("hidden");
 }
 
-function runAudit() {
+function backToHome(ev) {
+  document.getElementById("results").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
+}
+
+function backToResultsFromImage(ev) {
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("image-size-analysis").classList.add("hidden");
+}
+
+function backToResultsFromHeading(ev) {
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("heading-structure").classList.add("hidden");
+}
+
+function resultsDetailHandler(ev) {
+  console.log(ev.target.id);
+  const id = ev.target.closest("li").id;
+
+  switch (id) {
+    case "keyword":
+      console.log("keyword clicked");
+      break;
+    case "heading":
+      console.log("heading clicked");
+      document.getElementById("heading-structure").classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
+      break;
+    case "image-analysis":
+      console.log("image analysis clicked");
+      document.getElementById("image-size-analysis").classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
+      break;
+    case "html-tags":
+      console.log("html-tags clicked");
+      break;
+    case "link-check":
+      console.log("link check clicked");
+      break;
+  }
+}
+
+async function runAudit() {
   let imageAuditData = auditImages();
-  let linkAuditData = auditLinks();
+  let linkAuditData = await auditLinks();
+  let { auditHeaders, auditTags, auditKeywords } = traverseNodes();
+  let primeKeyword = Object.keys(auditKeywords)[0];
+  console.log(primeKeyword);
+  let { urlCounter, headingCounter, titleCounter } = checkKeyword(primeKeyword); //TODO: Update the function call
 
-  traverseNodes();
-  findKeywords();
-  checkKeyword("Shopify"); //TODO: Update the function call
-
+  chrome.runtime.sendMessage({
+    message: "Audit Data",
+    data: {
+      auditData: {
+        imageAuditData,
+        linkAuditData,
+        auditHeaders,
+        auditTags,
+        auditKeywords,
+        auditPrimeKeyword: {
+          urlCounter,
+          headingCounter,
+          titleCounter,
+        },
+      },
+    },
+  });
   // Functions called must be in local scope of runAudit()
   function auditImages() {
     let count = 0;
@@ -36,29 +109,28 @@ function runAudit() {
       }
     });
     //returning data to popup
+    if (count == 1) {
+      console.log(`You have a image with resolution higher than 1920`);
+      if (images[0].src) {
+        console.log(`Here is the image source: ${images[0].src}`);
+      } else if (images[0].srcset) {
+        console.log(`Here is the image source: ${images[0].srcset}`);
+      }
+    } else if (count > 1) {
+      console.log(`You have ${count} images with resolution higher than 1920`);
+      console.log(`Here is the list of image sources:`);
+      images.forEach((img) => {
+        if (img.src) {
+          console.log(img.src);
+        } else if (img.srcset) {
+          console.log(img.srcset.split(",")[0]);
+        }
+      });
+    }
     return { count, images };
-
-    // if (count == 1) {
-    //   console.log(`You have a image with resolution higher than 1920`);
-    //   if (images[0].src) {
-    //     console.log(`Here is the image source: ${images[0].src}`);
-    //   } else if (images[0].srcset) {
-    //     console.log(`Here is the image source: ${images[0].srcset}`);
-    //   }
-    // } else if (count > 1) {
-    //   console.log(`You have ${count} images with resolution higher than 1920`);
-    //   console.log(`Here is the list of image sources:`);
-    //   images.forEach((img) => {
-    //     if (img.src) {
-    //       console.log(img.src);
-    //     } else if (img.srcset) {
-    //       console.log(img.srcset.split(",")[0]);
-    //     }
-    //   });
-    // }
   }
 
-  function auditLinks() {
+  async function auditLinks() {
     let count = 0;
     const brokenLinks = [];
     document.querySelectorAll("a").forEach(async (link) => {
@@ -75,21 +147,28 @@ function runAudit() {
         console.log(err.message);
       }
     });
+    setTimeout(() => {
+      if (count == 1) {
+        console.log(`You have a broken link`);
+        console.log(brokenLinks[0]);
+      } else if (count > 1) {
+        console.log(`You have broken links`);
+
+        // brokenLinks.forEach((brokenLink) => {
+        //   console.log(`Broken Link: ${brokenLink}`);
+        // });
+      }
+    }, 2000);
+
     return { count, brokenLinks };
-    // if (count == 1) {
-    //   console.log(`You have a broken link`);
-    //   console.log(brokenLinks[0]);
-    // } else if (count > 1) {
-    //   console.log(`You have ${count} broken links`);
-    //   brokenLinks.forEach((brokenLink) => {
-    //     console.log(brokenLink);
-    //   });
-    // }
   }
 
   function traverseNodes() {
     const headers = {};
-    const tags = {};
+    const tags = {
+      count: 0,
+      elements: [],
+    };
     let keywords = {};
 
     for (const element of document.body.querySelectorAll("*")) {
@@ -120,7 +199,6 @@ function runAudit() {
         element.tagName !== "TEMPLATE" &&
         element.tagName !== "title"
       ) {
-        // console.log(element.tagName);
         findKeywords(element, keywords);
       }
     }
@@ -129,12 +207,46 @@ function runAudit() {
     );
     sortedArrayOfWords.splice(5);
     let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
-    checkHeaderStructure(headers);
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { sortedKeywords },
-    });
+    console.log(headers);
+    console.log("Keywords");
     console.log(sortedKeywords);
+    checkHeaderStructure(headers);
+    return {
+      auditHeaders: headers,
+      auditTags: tags,
+      auditKeywords: sortedKeywords,
+    };
+  }
+  function checkHeaderStructure(headers) {
+    // Check for none or multiple H1 headers
+    if (!headers["H1"]) {
+      console.log("WARNING: You do not have an H1 header defined!");
+    } else {
+      if (headers["H1"] > 1) {
+        console.log(
+          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+        );
+      }
+    }
+
+    // Check for gaps in header structure
+    // const headerKeys = Object.keys(headers);
+    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+    let gapStartTag;
+    let gap = 0;
+
+    headerTags.forEach((tag, index) => {
+      const count = headers[tag];
+      if (!count) {
+        gapStartTag = headerTags[index - 1];
+        gap++;
+      } else if (count && gap >= 1) {
+        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+        console.log(`Gap between ${gapStartTag} and ${tag}`);
+        gap = 0;
+      }
+    });
   }
 
   function getHeaders(element, headers) {
@@ -170,40 +282,9 @@ function runAudit() {
     }
   }
 
-  function checkHeaderStructure(headers) {
-    // Check for none or multiple H1 headers
-    console.log(headers);
-    if (!headers["H1"]) {
-      console.log("WARNING: You do not have an H1 header defined!");
-    } else {
-      if (headers["H1"] > 1) {
-        console.log(
-          `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
-        );
-      }
-    }
-
-    // Check for gaps in header structure
-    // const headerKeys = Object.keys(headers);
-    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
-
-    let gapStartTag;
-    let gap = 0;
-
-    headerTags.forEach((tag, index) => {
-      const count = headers[tag];
-      if (!count) {
-        gapStartTag = headerTags[index - 1];
-        gap++;
-      } else if (count && gap >= 1) {
-        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
-        console.log(`Gap between ${gapStartTag} and ${tag}`);
-        gap = 0;
-      }
-    });
-  }
-
   function checkDeprecatedTags(element, tags) {
+    let count = 0;
+    let elements = [];
     const deprecatedTags = {
       ACRONYM:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/acronym",
@@ -250,10 +331,14 @@ function runAudit() {
     };
 
     if (deprecatedTags[element.tagName]) {
+      tags.count++;
       console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
       console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
-      tags.push(element);
+      tags.elements.push(element);
+    } else {
+      console.log("No deprecated tags found!");
     }
+    return { count, elements };
   }
   function checkKeyword(keyword) {
     keyword = keyword.toLowerCase();
@@ -281,7 +366,6 @@ function runAudit() {
     if (url.indexOf(keyword) > -1) {
       urlCounter++;
     }
-
     if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
       if (titleCounter === 0) {
         console.log(`You should add the keyword "${keyword}" in <title>`);
@@ -297,17 +381,78 @@ function runAudit() {
     if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
       console.log(`${keyword} is a strong keyword`);
     }
+    return { urlCounter, headingCounter, titleCounter };
   }
 }
 
 function handleData(request, sender, sendResponse) {
   let button = document.getElementById("btn");
-  if (request.message === "Keywords") {
+  if (request.message === "Audit Data") {
     button.textContent = "Diagnostics Finished";
-    console.log(request.data.sortedKeywords);
+    let auditData = request.data.auditData;
+    console.log(auditData);
+    // checkHeaderStructure(auditData.auditHeaders);
+    // console.log(auditData.imageAuditData.images);
+    // checkImages(
+    //   auditData.imageAuditData.count,
+    //   auditData.imageAuditData.images
+    // );
   } else {
     console.log("no messages!");
   }
 }
+
+function checkHeaderStructure(headers) {
+  // Check for none or multiple H1 headers
+  if (!headers["H1"]) {
+    console.log("WARNING: You do not have an H1 header defined!");
+  } else {
+    if (headers["H1"] > 1) {
+      console.log(
+        `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+      );
+    }
+  }
+
+  // Check for gaps in header structure
+  // const headerKeys = Object.keys(headers);
+  const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+  let gapStartTag;
+  let gap = 0;
+
+  headerTags.forEach((tag, index) => {
+    const count = headers[tag];
+    if (!count) {
+      gapStartTag = headerTags[index - 1];
+      gap++;
+    } else if (count && gap >= 1) {
+      console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+      console.log(`Gap between ${gapStartTag} and ${tag}`);
+      gap = 0;
+    }
+  });
+}
+
+// function checkImages(count, images) {
+//   if (count == 1) {
+//     console.log(`You have a image with resolution higher than 1920`);
+//     if (images[0].src) {
+//       console.log(`Here is the image source: ${images[0].src}`);
+//     } else if (images[0].srcset) {
+//       console.log(`Here is the image source: ${images[0].srcset}`);
+//     }
+//   } else if (count > 1) {
+//     console.log(`You have ${count} images with resolution higher than 1920`);
+//     console.log(`Here is the list of image sources:`);
+//     images.forEach((img) => {
+//       if (img.src) {
+//         console.log(img.src);
+//       } else if (img.srcset) {
+//         console.log(img.srcset.split(",")[0]);
+//       }
+//     });
+//   }
+// }
 
 document.addEventListener("DOMContentLoaded", init);
