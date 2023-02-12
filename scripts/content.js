@@ -8,7 +8,7 @@ function init() {
   ) {
     if (request.message === "Keywords") {
       button.textContent = "Diagnostics Finished";
-      console.log(request.data.keywords);
+      console.log(request.data.sortedKeywords);
     } else {
       console.log("no messages!");
     }
@@ -16,7 +16,7 @@ function init() {
 }
 
 async function handleClick(ev) {
-  ev.target.innerHTML = "Diagnosing";
+  ev.target.textContent = "Diagnosing";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -96,57 +96,20 @@ function runAudit() {
   function traverseNodes() {
     const headers = {};
     const tags = {};
-    const keywords = {};
-
-    // ["then","they","them","their","this","that",""] && exceptions.test(text)
+    let keywords = {};
     for (const element of document.body.querySelectorAll("*")) {
-      getHeaders(element, headers);
+      //ALL HTML elements in Body
+      checkHeaders(element, headers);
       checkDeprecatedTags(element, tags);
       if (element.tagName !== "SCRIPT") findKeywords(element, keywords);
     }
-
-    checkHeaderStructure(headers);
-  }
-
-  function getHeaders(element, headers) {
-    if (
-      element.tagName === "H1" ||
-      element.tagName === "H2" ||
-      element.tagName === "H3" ||
-      element.tagName === "H4" ||
-      element.tagName === "H5" ||
-      element.tagName === "H6"
-    ) {
-      if (headers[element.tagName] === undefined) {
-        headers[element.tagName] = 1;
-      } else {
-        headers[element.tagName]++;
-      }
-    }
-  }
-
-  function findKeywords(element, keywords) {
-    const exceptions =
-      /\b(from|they|then|their|this|that|those|them|will|have|shall|thou|These|Those|They|\d+.*)\b/gi;
-    const content = element.textContent;
-    if (content) {
-      const wordsArray = content.split(" ");
-      if (wordsArray.length > 0) {
-        wordsArray.forEach((word) => {
-          if (word.length > 3 && !exceptions.test(word)) {
-            if (word in keywords) {
-              keywords[word] += 1;
-            } else {
-              keywords[word] = 1;
-            }
-          }
-        });
-      }
-    }
-  }
-  function checkHeaderStructure(headers) {
-    // Check for none or multiple H1 headers
+    const sortedArrayOfWords = Object.entries(keywords).sort(
+      (a, b) => b[1] - a[1]
+    );
+    sortedArrayOfWords.splice(5);
+    let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
     console.log(headers);
+    console.log(keywords);
     if (!headers["H1"]) {
       console.log("WARNING: You do not have an H1 header defined!");
     } else {
@@ -156,138 +119,191 @@ function runAudit() {
         );
       }
     }
+  }
+  const sortedArrayOfWords = Object.entries(keywords).sort(
+    (a, b) => b[1] - a[1]
+  );
+  sortedArrayOfWords.splice(5);
+  let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
 
-    // Check for gaps in header structure
-    // const headerKeys = Object.keys(headers);
-    const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
+  checkHeaderStructure(headers);
+  chrome.runtime.sendMessage({
+    message: "Keywords",
+    data: { sortedKeywords },
+  });
+  console.log(sortedKeywords);
+}
 
-    let gapStartTag;
-    let gap = 0;
+function getHeaders(element, headers) {
+  if (
+    element.tagName === "H1" ||
+    element.tagName === "H2" ||
+    element.tagName === "H3" ||
+    element.tagName === "H4" ||
+    element.tagName === "H5" ||
+    element.tagName === "H6"
+  ) {
+    if (headers[element.tagName] === undefined) {
+      headers[element.tagName] = 1;
+    } else {
+      headers[element.tagName]++;
+    }
+  }
+}
 
-    headerTags.forEach((tag, index) => {
-      const count = headers[tag];
-      console.log(count);
+function findKeywords(element, keywords) {
+  const matches =
+    /\b(?!from|they|then|their|this|that|those|them|will|have|https|http|shall|thou|These|Those|They\b)[a-zA-Z]{4,}\b/g;
 
-      if (!count) {
-        gapStartTag = headerTags[index - 1];
-        gap++;
-      } else if (count && gap >= 1) {
-        console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
-        console.log(`Gap between ${gapStartTag} and ${tag}`);
-        gap = 0;
+  const arrayOfWords = element.textContent.match(matches);
+  if (arrayOfWords?.length > 0) {
+    arrayOfWords.forEach((word) => {
+      if (word in keywords) {
+        keywords[word] += 1;
+      } else {
+        keywords[word] = 1;
       }
     });
   }
+}
 
-  function findKeywords() {
-    let textNodes = [];
-    let body = document.body;
-    for (let i = 0; i < body.childNodes.length; i++) {
-      var childNode = body.childNodes[i];
-      if (childNode.nodeType === 3) {
-        textNodes.push(childNode);
-      }
-    }
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { keywords },
-    });
-  }
-
-  function checkDeprecatedTags(element, tags) {
-    const deprecatedTags = {
-      ACRONYM:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/acronym",
-      APPLET:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/applet",
-      BGSOUND:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/bgsound",
-      BIG: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/big",
-      BLINK: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blink",
-      CENTER:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/center",
-      CONTENT:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/content",
-      DIR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dir",
-      FONT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/font",
-      FRAME: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frame",
-      FRAMESET:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frameset",
-      IMAGE: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/image",
-      KEYGEN:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/keygen",
-      MARQUEE:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/marquee",
-      MENUITEM:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/menuitem",
-      NOBR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/nobr",
-      NOEMBED:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noembed",
-      NOFRAMES:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noframes",
-      PARAM: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/param",
-      PLAINTEXT:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/plaintext",
-      RB: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rb",
-      RTC: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rtc",
-      SHADOW:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/shadow",
-      SPACER:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/spacer",
-      STRIKE:
-        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/strike",
-      TT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tt",
-      XMP: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/xmp",
-    };
-
-    if (deprecatedTags[element.tagName]) {
-      console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
-      console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
-      tags.push(element);
+function checkHeaderStructure(headers) {
+  // Check for none or multiple H1 headers
+  console.log(headers);
+  if (!headers["H1"]) {
+    console.log("WARNING: You do not have an H1 header defined!");
+  } else {
+    if (headers["H1"] > 1) {
+      console.log(
+        `WARNING: You have multiple H1 headers defined (${headers["H1"]} total)`
+      );
     }
   }
-  function checkKeyword(keyword) {
-    keyword = keyword.toLowerCase();
-    let titleCounter = 0;
-    let headingCounter = 0;
-    let urlCounter = 0;
 
-    document.querySelectorAll("title").forEach((title) => {
-      if (title) {
-        if (title.innerHTML.toLowerCase().includes(keyword)) {
-          titleCounter++;
-        }
-      }
-    });
+  // Check for gaps in header structure
+  // const headerKeys = Object.keys(headers);
+  const headerTags = ["H1", "H2", "H3", "H4", "H5", "H6"];
 
-    document.querySelectorAll("h1").forEach((heading) => {
-      if (heading) {
-        if (heading.innerHTML.toLowerCase().includes(keyword)) {
-          headingCounter++;
-        }
-      }
-    });
+  let gapStartTag;
+  let gap = 0;
 
-    let url = window.location.href;
-    if (url.indexOf(keyword) > -1) {
-      urlCounter++;
+  headerTags.forEach((tag, index) => {
+    const count = headers[tag];
+    console.log(count);
+
+    if (!count) {
+      gapStartTag = headerTags[index - 1];
+      gap++;
+    } else if (count && gap >= 1) {
+      console.log("HEADER CONTINUITY ISSUE IDENTIFIED");
+      console.log(`Gap between ${gapStartTag} and ${tag}`);
+      gap = 0;
     }
+  });
+}
 
-    if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
-      if (titleCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <title>`);
-      }
-      if (headingCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <h1>`);
-      }
-      if (urlCounter === 0) {
-        console.log(`You should add the keyword "${keyword}" in <body>`);
+function findKeywords() {
+  let textNodes = [];
+  let body = document.body;
+  for (let i = 0; i < body.childNodes.length; i++) {
+    var childNode = body.childNodes[i];
+    if (childNode.nodeType === 3) {
+      textNodes.push(childNode);
+    }
+  }
+  chrome.runtime.sendMessage({
+    message: "Keywords",
+    data: { keywords },
+  });
+}
+
+function checkDeprecatedTags(element, tags) {
+  const deprecatedTags = {
+    ACRONYM:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/acronym",
+    APPLET: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/applet",
+    BGSOUND:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/bgsound",
+    BIG: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/big",
+    BLINK: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blink",
+    CENTER: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/center",
+    CONTENT:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/content",
+    DIR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dir",
+    FONT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/font",
+    FRAME: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frame",
+    FRAMESET:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frameset",
+    IMAGE: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/image",
+    KEYGEN: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/keygen",
+    MARQUEE:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/marquee",
+    MENUITEM:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/menuitem",
+    NOBR: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/nobr",
+    NOEMBED:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noembed",
+    NOFRAMES:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noframes",
+    PARAM: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/param",
+    PLAINTEXT:
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/plaintext",
+    RB: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rb",
+    RTC: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rtc",
+    SHADOW: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/shadow",
+    SPACER: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/spacer",
+    STRIKE: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/strike",
+    TT: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tt",
+    XMP: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/xmp",
+  };
+
+  if (deprecatedTags[element.tagName]) {
+    console.log(`FOUND DEPRECATED HTML ELEMENT: ${element.tagName}`);
+    console.log(`Link to docs: ${deprecatedTags[element.tagName]}`);
+    tags.push(element);
+  }
+}
+function checkKeyword(keyword) {
+  keyword = keyword.toLowerCase();
+  let titleCounter = 0;
+  let headingCounter = 0;
+  let urlCounter = 0;
+
+  document.querySelectorAll("title").forEach((title) => {
+    if (title) {
+      if (title.innerHTML.toLowerCase().includes(keyword)) {
+        titleCounter++;
       }
     }
+  });
 
-    if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
-      console.log(`${keyword} is a strong keyword`);
+  document.querySelectorAll("h1").forEach((heading) => {
+    if (heading) {
+      if (heading.innerHTML.toLowerCase().includes(keyword)) {
+        headingCounter++;
+      }
     }
+  });
+
+  let url = window.location.href;
+  if (url.indexOf(keyword) > -1) {
+    urlCounter++;
+  }
+
+  if (titleCounter > 0 || headingCounter > 0 || urlCounter > 0) {
+    if (titleCounter === 0) {
+      console.log(`You should add the keyword "${keyword}" in <title>`);
+    }
+    if (headingCounter === 0) {
+      console.log(`You should add the keyword "${keyword}" in <h1>`);
+    }
+    if (urlCounter === 0) {
+      console.log(`You should add the keyword "${keyword}" in <body>`);
+    }
+  }
+
+  if (titleCounter > 0 && headingCounter > 0 && urlCounter > 0) {
+    console.log(`${keyword} is a strong keyword`);
   }
 }
 
