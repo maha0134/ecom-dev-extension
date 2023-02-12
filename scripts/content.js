@@ -1,19 +1,18 @@
 function init() {
   let button = document.getElementById("btn");
+  button.addEventListener("click", handleClick);
   chrome.runtime.onMessage.addListener(function (
     request,
     sender,
     sendResponse
   ) {
     if (request.message === "Keywords") {
-      let btn = document.getElementById("btn");
-      btn.textContent = "Diagnostics Finished";
+      button.textContent = "Diagnostics Finished";
       console.log(request.data.keywords);
     } else {
       console.log("no messages!");
     }
   });
-  button.addEventListener("click", handleClick);
 }
 
 async function handleClick(ev) {
