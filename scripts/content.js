@@ -8,7 +8,7 @@ function init() {
   ) {
     if (request.message === "Keywords") {
       button.textContent = "Diagnostics Finished";
-      console.log(request.data.keywords);
+      console.log(request.data.sortedKeywords);
     } else {
       console.log("no messages!");
     }
@@ -96,7 +96,7 @@ function runAudit() {
   function traverseNodes() {
     const headers = {};
     const tags = {};
-    const keywords = {};
+    let keywords = {};
 
     // ["then","they","them","their","this","that",""] && exceptions.test(text)
     for (const element of document.body.querySelectorAll("*")) {
@@ -125,15 +125,24 @@ function runAudit() {
         element.tagName !== "OPTION" &&
         element.tagName !== "FORM" &&
         element.tagName !== "INPUT" &&
-        element.tagName !== "TEMPLATE"
+        element.tagName !== "TEMPLATE" &&
+        element.tagName !== "title"
       ) {
-        console.log(element.tagName);
+        // console.log(element.tagName);
         findKeywords(element, keywords);
       }
     }
+    const sortedArrayOfWords = Object.entries(keywords).sort(
+      (a, b) => b[1] - a[1]
+    );
+    sortedArrayOfWords.splice(5);
+    let sortedKeywords = Object.fromEntries(sortedArrayOfWords);
 
-    console.log(headers);
-    console.log(keywords);
+    chrome.runtime.sendMessage({
+      message: "Keywords",
+      data: { sortedKeywords },
+    });
+    console.log(sortedKeywords);
     if (!headers["H1"]) {
       console.log("WARNING: You do not have an H1 header defined!");
     } else {
@@ -175,11 +184,6 @@ function runAudit() {
         }
       });
     }
-    
-    chrome.runtime.sendMessage({
-      message: "Keywords",
-      data: { keywords },
-    });
   }
 
   function checkDeprecatedTags(element, tags) {
